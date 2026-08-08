@@ -1,0 +1,305 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block page_title %}<h1>Dashboard</h1>{% endblock %}
+
+{% block content %}
+
+<!-- ── KPI Cards ─────────────────────────────────────────────────────── -->
+<div class="kpi-grid">
+  <div class="kpi-card kpi-purple">
+    <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-label">Total Students</div>
+      <div class="kpi-value">{{ stats.total }}</div>
+      <div class="kpi-sub">{{ face_trained }} face-trained</div>
+    </div>
+    <div class="kpi-sparkline"></div>
+  </div>
+
+  <div class="kpi-card kpi-green">
+    <div class="kpi-icon"><i class="fa-solid fa-user-check"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-label">Present Today</div>
+      <div class="kpi-value">{{ stats.present }}</div>
+      <div class="kpi-sub">{{ today }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card kpi-red">
+    <div class="kpi-icon"><i class="fa-solid fa-user-xmark"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-label">Absent Today</div>
+      <div class="kpi-value">{{ stats.absent }}</div>
+      <div class="kpi-sub">out of {{ stats.total }}</div>
+    </div>
+  </div>
+
+  <div class="kpi-card {% if stats.percentage >= 75 %}kpi-blue{% else %}kpi-orange{% endif %}">
+    <div class="kpi-icon"><i class="fa-solid fa-percent"></i></div>
+    <div class="kpi-body">
+      <div class="kpi-label">Attendance Rate</div>
+      <div class="kpi-value">{{ stats.percentage }}%</div>
+      <div class="kpi-sub">today's rate</div>
+    </div>
+    <div class="kpi-ring" style="--pct:{{ stats.percentage }}">
+      <svg viewBox="0 0 36 36">
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.1)" stroke-width="3"/>
+        <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="3"
+                stroke-dasharray="{{ stats.percentage }},100"
+                stroke-linecap="round"
+                transform="rotate(-90 18 18)"/>
+      </svg>
+    </div>
+  </div>
+</div>
+
+<!-- ── Row 2: Charts ──────────────────────────────────────────────────── -->
+<div class="row-2col">
+
+  <!-- Weekly Trend -->
+  <div class="glass-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Weekly Attendance Trend</div>
+        <div class="card-sub">Last 7 days</div>
+      </div>
+      <div class="card-badge"><i class="fa-solid fa-arrow-trend-up"></i></div>
+    </div>
+    <div class="chart-wrap">
+      <canvas id="weeklyChart"></canvas>
+    </div>
+  </div>
+
+  <!-- Department Doughnut -->
+  <div class="glass-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Department Presence</div>
+        <div class="card-sub">Today's attendance by dept</div>
+      </div>
+      <div class="card-badge"><i class="fa-solid fa-building"></i></div>
+    </div>
+    <div class="chart-wrap chart-wrap-sm">
+      <canvas id="deptChart"></canvas>
+    </div>
+    {% if dept_labels %}
+    <div class="dept-legend">
+      {% for i in range(dept_labels|length) %}
+      <div class="dept-leg-item">
+        <span class="leg-dot" data-idx="{{ i }}"></span>
+        <span class="leg-name">{{ dept_labels[i] }}</span>
+        <span class="leg-val">{{ dept_present[i] }}</span>
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div class="empty-state-sm">No attendance recorded today</div>
+    {% endif %}
+  </div>
+
+</div>
+
+<!-- ── Row 3: Recent Attendance + Low Attendance ─────────────────────── -->
+<div class="row-2col">
+
+  <!-- Today's Attendance -->
+  <div class="glass-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Recent Attendance</div>
+        <div class="card-sub">Today's entries</div>
+      </div>
+      <a href="{{ url_for('attendance') }}" class="btn-sm-primary">
+        <i class="fa-solid fa-camera"></i> Take Attendance
+      </a>
+    </div>
+    {% if today_attendance %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Student</th>
+            <th>Subject</th>
+            <th>Time</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in today_attendance %}
+          <tr>
+            <td>
+              <div class="table-name">{{ r.student_name }}</div>
+              <div class="table-sub">{{ r.student_id }}</div>
+            </td>
+            <td><span class="subject-pill">{{ r.subject }}</span></td>
+            <td class="text-muted">{{ r.time }}</td>
+            <td>
+              <span class="status-badge {% if r.status == 'Present' %}status-present{% else %}status-late{% endif %}">
+                {{ r.status }}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-calendar-xmark"></i>
+      <span>No attendance recorded today</span>
+    </div>
+    {% endif %}
+  </div>
+
+  <!-- Right column: Low Attendance + Activity Log -->
+  <div class="col-stack">
+
+    <!-- Low Attendance Alert -->
+    <div class="glass-card">
+      <div class="card-header">
+        <div>
+          <div class="card-title">⚠️ Low Attendance</div>
+          <div class="card-sub">Students below 75%</div>
+        </div>
+        {% if low_att %}
+        <span class="badge-alert">{{ low_att|length }}</span>
+        {% endif %}
+      </div>
+      {% if low_att %}
+        {% for s in low_att %}
+        <div class="low-att-row">
+          <div>
+            <div class="low-att-name">{{ s.name }}</div>
+            <div class="low-att-dept">{{ s.department }} · {{ s.year }}</div>
+          </div>
+          <div class="low-att-pct" style="color: {{ '#ef4444' if s.percentage < 50 else '#f59e0b' }}">
+            {{ s.percentage }}%
+          </div>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('students') }}" class="view-all-link">View all →</a>
+      {% else %}
+      <div class="empty-state-sm">
+        <i class="fa-solid fa-circle-check" style="color:#10d4a3"></i>
+        All students above 75%
+      </div>
+      {% endif %}
+    </div>
+
+    <!-- Activity Log -->
+    <div class="glass-card">
+      <div class="card-header">
+        <div class="card-title">Recent Activity</div>
+      </div>
+      {% if recent_log %}
+        {% for log in recent_log %}
+        <div class="log-item">
+          <div class="log-dot"></div>
+          <div>
+            <div class="log-action">{{ log.action.replace('_', ' ') }}</div>
+            <div class="log-detail">{{ log.details or '—' }}</div>
+            <div class="log-time">{{ log.timestamp }}</div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state-sm">No recent activity</div>
+      {% endif %}
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+const WEEKLY_DATES  = {{ weekly_dates | tojson }};
+const WEEKLY_COUNTS = {{ weekly_counts | tojson }};
+const DEPT_LABELS   = {{ dept_labels | tojson }};
+const DEPT_PRESENT  = {{ dept_present | tojson }};
+
+// Chart defaults
+Chart.defaults.color = 'rgba(255,255,255,0.45)';
+Chart.defaults.font.family = 'Inter, sans-serif';
+
+// ── Weekly Trend ─────────────────────────
+const wCtx = document.getElementById('weeklyChart');
+if (wCtx) {
+  const gradient = wCtx.getContext('2d').createLinearGradient(0, 0, 0, 250);
+  gradient.addColorStop(0, 'rgba(108,99,255,0.4)');
+  gradient.addColorStop(1, 'rgba(108,99,255,0)');
+
+  new Chart(wCtx, {
+    type: 'line',
+    data: {
+      labels: WEEKLY_DATES.length ? WEEKLY_DATES : ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'],
+      datasets: [{
+        label: 'Students Present',
+        data:   WEEKLY_COUNTS.length ? WEEKLY_COUNTS : [0,0,0,0,0,0,0],
+        fill:   true,
+        backgroundColor: gradient,
+        borderColor: '#6c63ff',
+        borderWidth: 2.5,
+        pointBackgroundColor: '#6c63ff',
+        pointRadius: 4,
+        pointHoverRadius: 6,
+        tension: 0.4,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { font: { size: 11 } } },
+        y: { grid: { color: 'rgba(255,255,255,.05)' }, ticks: { stepSize: 1 }, beginAtZero: true }
+      }
+    }
+  });
+}
+
+// ── Dept Doughnut ────────────────────────
+const dCtx = document.getElementById('deptChart');
+if (dCtx && DEPT_LABELS.length) {
+  const COLORS = ['#6c63ff','#3f8efc','#10d4a3','#f59e0b','#ef4444','#a855f7','#06b6d4','#ec4899'];
+  new Chart(dCtx, {
+    type: 'doughnut',
+    data: {
+      labels: DEPT_LABELS,
+      datasets: [{
+        data: DEPT_PRESENT,
+        backgroundColor: COLORS.slice(0, DEPT_LABELS.length),
+        borderColor: '#13131f',
+        borderWidth: 3,
+        hoverOffset: 8,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      cutout: '68%',
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: (ctx) => ` ${ctx.label}: ${ctx.raw} present`
+          }
+        }
+      }
+    }
+  });
+
+  // Colour the legend dots
+  const COLORS2 = ['#6c63ff','#3f8efc','#10d4a3','#f59e0b','#ef4444','#a855f7','#06b6d4','#ec4899'];
+  document.querySelectorAll('.leg-dot').forEach(dot => {
+    dot.style.background = COLORS2[parseInt(dot.dataset.idx) % COLORS2.length];
+  });
+}
+
+// Auto-refresh stats every 30s
+setInterval(() => {
+  fetch('/api/stats').then(r=>r.json()).then(d=>{
+    // Could update KPI cards live; left as enhancement
+  });
+}, 30000);
+</script>
+{% endblock %}
