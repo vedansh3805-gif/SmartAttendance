@@ -1,0 +1,158 @@
+{% extends "base.html" %}
+{% block title %}Add Student{% endblock %}
+{% block page_title %}<h1>Register Student</h1>{% endblock %}
+
+{% block content %}
+<div class="form-page-wrap">
+  <div class="glass-card form-card">
+
+    <div class="form-card-header">
+      <div class="form-card-icon"><i class="fa-solid fa-user-plus"></i></div>
+      <div>
+        <div class="form-card-title">New Student Registration</div>
+        <div class="form-card-sub">Fill in the details. Face capture happens after this step.</div>
+      </div>
+    </div>
+
+    <form method="POST" action="{{ url_for('add_student') }}" enctype="multipart/form-data">
+
+      <!-- Photo Upload -->
+      <div class="photo-upload-section">
+        <div class="photo-preview" id="photoPreview">
+          <i class="fa-solid fa-user fa-3x" style="color:rgba(255,255,255,.2)"></i>
+          <span>Upload Photo</span>
+        </div>
+        <div class="photo-upload-info">
+          <div class="form-label">PROFILE PHOTO <span class="optional">(optional)</span></div>
+          <label for="photo" class="btn-ghost photo-btn">
+            <i class="fa-solid fa-upload"></i> Choose Image
+          </label>
+          <input type="file" id="photo" name="photo" accept="image/*"
+                 style="display:none" onchange="previewPhoto(event)" />
+          <div style="color:rgba(255,255,255,.3);font-size:.78rem;margin-top:8px;">PNG, JPG · Max 16MB</div>
+        </div>
+      </div>
+
+      <div class="form-divider"></div>
+      <div class="form-section-title">Student Information</div>
+
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">STUDENT ID <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-id-badge"></i>
+            <input type="text" name="student_id" class="form-input"
+                   placeholder="e.g. RA2211003010001" required maxlength="30"
+                   style="text-transform:uppercase" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">FULL NAME <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-user"></i>
+            <input type="text" name="name" class="form-input"
+                   placeholder="Enter full name" required maxlength="100" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">DEPARTMENT <span class="required">*</span></label>
+          <select name="department" class="form-select" required>
+            <option value="">Select Department</option>
+            {% for d in config.DEPARTMENTS %}
+            <option value="{{ d }}">{{ d }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">YEAR <span class="required">*</span></label>
+          <select name="year" class="form-select" required>
+            <option value="">Select Year</option>
+            {% for y in config.YEARS %}
+            <option value="{{ y }}">{{ y }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">SECTION <span class="required">*</span></label>
+          <select name="section" class="form-select" required>
+            <option value="">Select Section</option>
+            {% for s in config.SECTIONS %}
+            <option value="{{ s }}">Section {{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+      </div>
+
+      <div class="form-section-title" style="margin-top:28px;">Contact Information</div>
+      <div class="form-grid-2">
+        <div class="form-group">
+          <label class="form-label">EMAIL ADDRESS</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-envelope"></i>
+            <input type="email" name="email" class="form-input" placeholder="student@college.edu" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PHONE NUMBER</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-phone"></i>
+            <input type="tel" name="phone" class="form-input" placeholder="+91 98765 43210" maxlength="15" />
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <a href="{{ url_for('students') }}" class="btn-ghost">
+          <i class="fa-solid fa-arrow-left"></i> Cancel
+        </a>
+        <button type="submit" class="btn-primary">
+          <i class="fa-solid fa-arrow-right"></i> Register &amp; Capture Face
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <div class="form-info-panel">
+    <div class="info-card glass-card">
+      <div class="info-icon"><i class="fa-solid fa-circle-info"></i></div>
+      <div class="info-title">What happens next?</div>
+      <div class="info-steps">
+        <div class="info-step"><span class="step-num">1</span><span>Submit this form to create the student record</span></div>
+        <div class="info-step"><span class="step-num">2</span><span>You'll be redirected to the face capture page</span></div>
+        <div class="info-step"><span class="step-num">3</span><span>Capture 20+ face images using the webcam</span></div>
+        <div class="info-step"><span class="step-num">4</span><span>Train the AI model — student is ready for attendance</span></div>
+      </div>
+    </div>
+    <div class="info-card glass-card" style="margin-top:16px;">
+      <div class="info-icon" style="background:rgba(16,212,163,.15);color:#10d4a3;">
+        <i class="fa-solid fa-lightbulb"></i>
+      </div>
+      <div class="info-title">Tips for accurate recognition</div>
+      <ul class="tips-list">
+        <li>Capture in good lighting</li>
+        <li>Include multiple angles (left, right, straight)</li>
+        <li>Avoid heavy shadows on the face</li>
+        <li>Remove glasses for some images</li>
+      </ul>
+    </div>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function previewPhoto(e) {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = ev => {
+    const p = document.getElementById('photoPreview');
+    p.innerHTML = `<img src="${ev.target.result}" style="width:100%;height:100%;object-fit:cover;border-radius:inherit;" />`;
+  };
+  reader.readAsDataURL(file);
+}
+</script>
+{% endblock %}

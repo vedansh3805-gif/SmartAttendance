@@ -1,0 +1,150 @@
+{% extends "base.html" %}
+{% block title %}Attendance Records{% endblock %}
+{% block page_title %}<h1>Records</h1>{% endblock %}
+
+{% block content %}
+
+<!-- Filter Card -->
+<div class="glass-card filter-card">
+  <form method="GET" action="{{ url_for('records') }}" id="filterForm">
+    <div class="filter-form">
+      <div class="filter-group">
+        <label class="form-label">DATE</label>
+        <input type="date" name="date" class="form-input"
+               value="{{ filters.get('date','') }}" style="padding-left:14px;" />
+      </div>
+      <div class="filter-group">
+        <label class="form-label">DEPARTMENT</label>
+        <select name="department" class="form-select">
+          <option value="">All Departments</option>
+          {% for d in departments %}
+          <option value="{{ d }}" {% if filters.get('department') == d %}selected{% endif %}>{{ d }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="form-label">YEAR</label>
+        <select name="year" class="form-select">
+          <option value="">All Years</option>
+          {% for y in years %}
+          <option value="{{ y }}" {% if filters.get('year') == y %}selected{% endif %}>{{ y }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="form-label">SUBJECT</label>
+        <select name="subject" class="form-select">
+          <option value="">All Subjects</option>
+          {% for s in subjects %}
+          <option value="{{ s }}" {% if filters.get('subject') == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <div class="filter-group">
+        <label class="form-label">STATUS</label>
+        <select name="status" class="form-select">
+          <option value="">All</option>
+          <option value="Present" {% if filters.get('status') == 'Present' %}selected{% endif %}>Present</option>
+          <option value="Late"    {% if filters.get('status') == 'Late'    %}selected{% endif %}>Late</option>
+        </select>
+      </div>
+    </div>
+    <div style="display:flex;gap:10px;margin-top:14px;flex-wrap:wrap;">
+      <div style="flex:1;min-width:200px;position:relative;">
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-id-badge"></i>
+          <input type="text" name="student_id" class="form-input"
+                 value="{{ filters.get('student_id','') }}"
+                 placeholder="Student ID or name…" id="recordSidInput" />
+        </div>
+        <div id="recordSidResults" style="display:none;"></div>
+      </div>
+      <button type="submit" class="btn-primary"><i class="fa-solid fa-filter"></i> Apply Filters</button>
+      <a href="{{ url_for('records') }}" class="btn-ghost"><i class="fa-solid fa-rotate-left"></i> Reset</a>
+    </div>
+  </form>
+</div>
+
+<!-- Results Header -->
+<div class="records-top">
+  <div class="count-pills">
+    <span class="count-pill">{{ total }} record(s) found</span>
+    {% if filters %}
+    <span class="count-pill count-orange">{{ filters|length }} filter(s) active</span>
+    {% endif %}
+  </div>
+  <div class="export-btns">
+    <a href="{{ url_for('export_csv_route', **filters) }}" class="btn-ghost btn-export-csv">
+      <i class="fa-solid fa-file-csv"></i> CSV
+    </a>
+    <a href="{{ url_for('export_excel_route', **filters) }}" class="btn-ghost btn-export-excel">
+      <i class="fa-solid fa-file-excel"></i> Excel
+    </a>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="glass-card">
+  {% if records %}
+  <div class="table-wrap">
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Student</th>
+          <th>Department</th>
+          <th>Year / Sec</th>
+          <th>Subject</th>
+          <th>Date</th>
+          <th>Time</th>
+          <th>Status</th>
+          <th>Marked By</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for r in records %}
+        <tr>
+          <td class="text-muted" style="font-size:.75rem;">{{ loop.index }}</td>
+          <td>
+            <a href="{{ url_for('student_profile', student_id=r.student_id) }}"
+               style="color:inherit;text-decoration:none;">
+              <div class="table-name">{{ r.student_name }}</div>
+              <div class="table-sub">{{ r.student_id }}</div>
+            </a>
+          </td>
+          <td class="text-muted">{{ r.department }}</td>
+          <td class="text-muted">{{ r.year }} / {{ r.section }}</td>
+          <td><span class="subject-pill">{{ r.subject }}</span></td>
+          <td class="text-muted">{{ r.date }}</td>
+          <td class="text-muted">{{ r.time }}</td>
+          <td>
+            <span class="status-badge {% if r.status == 'Present' %}status-present{% elif r.status == 'Late' %}status-late{% else %}status-absent{% endif %}">
+              {{ r.status }}
+            </span>
+          </td>
+          <td class="text-muted" style="font-size:.72rem;">{{ r.marked_by }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% else %}
+  <div class="empty-state" style="padding:60px 0;">
+    <i class="fa-solid fa-table-list" style="font-size:2.5rem;"></i>
+    <h3 style="color:rgba(255,255,255,.4);font-size:1rem;">No records found</h3>
+    <p style="color:rgba(255,255,255,.25);font-size:.82rem;">
+      {% if filters %}Try adjusting or clearing the filters.{% else %}No attendance has been recorded yet.{% endif %}
+    </p>
+  </div>
+  {% endif %}
+</div>
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+  setupStudentSearch('recordSidInput', 'recordSidResults', s => {
+    document.getElementById('recordSidInput').value = s.student_id;
+  });
+</script>
+{% endblock %}

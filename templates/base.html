@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>{% block title %}SmartAttend{% endblock %} – AI Attendance</title>
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <!-- Font Awesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <!-- Chart.js -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+
+  <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+<!-- ═══════════════════════════════════════════════
+     SIDEBAR
+══════════════════════════════════════════════════ -->
+<aside class="sidebar" id="sidebar">
+
+  <!-- Brand -->
+  <div class="sidebar-brand">
+    <div class="brand-icon">
+      <i class="fa-solid fa-eye"></i>
+    </div>
+    <div>
+      <span class="brand-name">SmartAttend</span>
+      <span class="brand-sub">AI Powered</span>
+    </div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="sidebar-nav">
+    <div class="nav-section-label">MAIN MENU</div>
+
+    <a href="{{ url_for('dashboard') }}"
+       class="nav-item {% if request.endpoint == 'dashboard' %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-chart-pie"></i></span>
+      <span class="nav-label">Dashboard</span>
+    </a>
+
+    <a href="{{ url_for('students') }}"
+       class="nav-item {% if request.endpoint in ['students','add_student','student_profile','edit_student'] %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-users"></i></span>
+      <span class="nav-label">Students</span>
+    </a>
+
+    <a href="{{ url_for('attendance') }}"
+       class="nav-item {% if request.endpoint == 'attendance' %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-camera"></i></span>
+      <span class="nav-label">Take Attendance</span>
+      <span class="nav-badge live">LIVE</span>
+    </a>
+
+    <a href="{{ url_for('records') }}"
+       class="nav-item {% if request.endpoint == 'records' %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-table-list"></i></span>
+      <span class="nav-label">Records</span>
+    </a>
+
+    <a href="{{ url_for('reports') }}"
+       class="nav-item {% if request.endpoint == 'reports' %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-chart-bar"></i></span>
+      <span class="nav-label">Reports</span>
+    </a>
+
+    {% if current_user and current_user.role == 'admin' %}
+    <div class="nav-section-label" style="margin-top:24px;">ADMIN</div>
+
+    <a href="{{ url_for('faculty') }}"
+       class="nav-item {% if request.endpoint in ['faculty','add_faculty'] %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-user-tie"></i></span>
+      <span class="nav-label">Faculty</span>
+    </a>
+
+    <a href="{{ url_for('settings') }}"
+       class="nav-item {% if request.endpoint == 'settings' %}active{% endif %}">
+      <span class="nav-icon"><i class="fa-solid fa-gear"></i></span>
+      <span class="nav-label">Settings</span>
+    </a>
+    {% endif %}
+  </nav>
+
+  <!-- Sidebar Footer -->
+  <div class="sidebar-footer">
+    {% if current_user %}
+    <div class="user-card">
+      <div class="user-avatar">
+        {{ current_user.full_name[0]|upper }}
+      </div>
+      <div class="user-info">
+        <div class="user-name">{{ current_user.full_name }}</div>
+        <div class="user-role">{{ current_user.role|title }}</div>
+      </div>
+    </div>
+    <a href="{{ url_for('logout') }}" class="logout-btn">
+      <i class="fa-solid fa-right-from-bracket"></i>
+      <span>Logout</span>
+    </a>
+    {% endif %}
+  </div>
+</aside>
+
+<!-- Overlay for mobile -->
+<div class="sidebar-overlay" id="sidebarOverlay" onclick="closeSidebar()"></div>
+
+<!-- ═══════════════════════════════════════════════
+     MAIN WRAPPER
+══════════════════════════════════════════════════ -->
+<div class="main-wrapper">
+
+  <!-- Top Bar -->
+  <header class="topbar">
+    <div class="topbar-left">
+      <button class="sidebar-toggle" onclick="toggleSidebar()">
+        <i class="fa-solid fa-bars"></i>
+      </button>
+      <div class="page-title">
+        {% block page_title %}<h1>Dashboard</h1>{% endblock %}
+      </div>
+    </div>
+    <div class="topbar-right">
+      <div class="topbar-clock" id="topbarClock">--:--</div>
+      <div class="topbar-date" id="topbarDate">Loading...</div>
+      <div class="topbar-user">
+        <div class="topbar-avatar">
+          {% if current_user %}{{ current_user.full_name[0]|upper }}{% else %}?{% endif %}
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Flash Messages -->
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+    <div class="flash-container">
+      {% for cat, msg in messages %}
+      <div class="flash flash-{{ cat }}">
+        <i class="fa-solid {% if cat == 'success' %}fa-circle-check{% elif cat == 'error' %}fa-circle-xmark{% else %}fa-circle-info{% endif %}"></i>
+        <span>{{ msg }}</span>
+        <button onclick="this.parentElement.remove()"><i class="fa-solid fa-xmark"></i></button>
+      </div>
+      {% endfor %}
+    </div>
+    {% endif %}
+  {% endwith %}
+
+  <!-- Page Content -->
+  <main class="main-content">
+    {% block content %}{% endblock %}
+  </main>
+
+</div><!-- /.main-wrapper -->
+
+<script src="{{ url_for('static', filename='js/main.js') }}"></script>
+{% block scripts %}{% endblock %}
+</body>
+</html>

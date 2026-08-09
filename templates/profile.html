@@ -1,0 +1,248 @@
+{% extends "base.html" %}
+{% block title %}{{ student.name }}{% endblock %}
+{% block page_title %}<h1>Student Profile</h1>{% endblock %}
+
+{% block content %}
+<div class="profile-layout">
+
+  <!-- Left: Profile Card -->
+  <div style="display:flex;flex-direction:column;gap:16px;">
+    <div class="glass-card profile-hero">
+
+      <!-- Avatar -->
+      <div class="profile-avatar-wrap" style="margin-bottom:14px;">
+        {% if student.image_path %}
+        <img src="{{ url_for('static', filename=student.image_path) }}"
+             class="profile-avatar-large" alt="{{ student.name }}" />
+        {% else %}
+        <div class="profile-avatar-fallback">{{ student.name[0]|upper }}</div>
+        {% endif %}
+      </div>
+
+      <div class="profile-name">{{ student.name }}</div>
+      <div class="profile-id">{{ student.student_id }}</div>
+      <div class="profile-dept-badge">{{ student.department }} · {{ student.year }} · Sec {{ student.section }}</div>
+
+      <span class="trained-badge-lg {% if student.face_encoding %}yes{% else %}no{% endif %}"
+            style="margin-top:10px;display:inline-flex;">
+        <i class="fa-solid {% if student.face_encoding %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i>
+        {% if student.face_encoding %}Face Trained{% else %}Not Trained{% endif %}
+      </span>
+
+      <!-- Attendance Circle -->
+      <div class="pct-circle-wrap">
+        {% set pct = percentage %}
+        {% set color = '#10d4a3' if pct >= 75 else '#f59e0b' if pct >= 50 else '#ef4444' %}
+        {% set dash = (pct / 100 * 100)|round(1) %}
+        <svg viewBox="0 0 36 36">
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="rgba(255,255,255,.08)" stroke-width="3"/>
+          <circle cx="18" cy="18" r="15.9" fill="none" stroke="{{ color }}" stroke-width="3"
+                  stroke-dasharray="{{ dash }},100" stroke-linecap="round"
+                  transform="rotate(-90 18 18)"/>
+        </svg>
+        <div class="pct-text">
+          <span class="pct-num" style="color:{{ color }}">{{ pct }}%</span>
+          <span class="pct-lbl">ATTENDANCE</span>
+        </div>
+      </div>
+
+      <!-- Info rows -->
+      <div class="profile-info-grid">
+        {% if student.email %}
+        <div class="info-row">
+          <span class="info-row-label"><i class="fa-solid fa-envelope fa-xs"></i> Email</span>
+          <span class="info-row-val">{{ student.email }}</span>
+        </div>
+        {% endif %}
+        {% if student.phone %}
+        <div class="info-row">
+          <span class="info-row-label"><i class="fa-solid fa-phone fa-xs"></i> Phone</span>
+          <span class="info-row-val">{{ student.phone }}</span>
+        </div>
+        {% endif %}
+        <div class="info-row">
+          <span class="info-row-label"><i class="fa-solid fa-calendar fa-xs"></i> Registered</span>
+          <span class="info-row-val">{{ student.registered_at[:10] }}</span>
+        </div>
+        <div class="info-row">
+          <span class="info-row-label"><i class="fa-solid fa-images fa-xs"></i> Face Images</span>
+          <span class="info-row-val">{{ dataset_images }} captured</span>
+        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="profile-actions">
+        <a href="{{ url_for('face_capture', student_id=student.student_id) }}" class="btn-primary">
+          <i class="fa-solid fa-camera"></i> Recapture Face
+        </a>
+        <button class="btn-ghost" onclick="toggleEdit()">
+          <i class="fa-solid fa-pen"></i> Edit Details
+        </button>
+        {% if current_user and current_user.role == 'admin' %}
+        <form method="POST" action="{{ url_for('delete_student', student_id=student.student_id) }}"
+              onsubmit="return confirm('Remove {{ student.name }} permanently?')">
+          <button type="submit" class="btn-danger" style="width:100%;justify-content:center;">
+            <i class="fa-solid fa-trash"></i> Remove Student
+          </button>
+        </form>
+        {% endif %}
+      </div>
+
+      <!-- Edit Form (hidden by default) -->
+      <div class="edit-form-inline" id="editForm">
+        <form method="POST" action="{{ url_for('edit_student', student_id=student.student_id) }}">
+          <div class="form-group">
+            <label class="form-label">FULL NAME</label>
+            <div class="input-wrap">
+              <i class="input-icon fa-solid fa-user"></i>
+              <input type="text" name="name" class="form-input" value="{{ student.name }}" required />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">EMAIL</label>
+            <div class="input-wrap">
+              <i class="input-icon fa-solid fa-envelope"></i>
+              <input type="email" name="email" class="form-input" value="{{ student.email or '' }}" />
+            </div>
+          </div>
+          <div class="form-group">
+            <label class="form-label">PHONE</label>
+            <div class="input-wrap">
+              <i class="input-icon fa-solid fa-phone"></i>
+              <input type="tel" name="phone" class="form-input" value="{{ student.phone or '' }}" />
+            </div>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+            <div class="form-group">
+              <label class="form-label">YEAR</label>
+              <select name="year" class="form-select">
+                {% for y in ['1st Year','2nd Year','3rd Year','4th Year'] %}
+                <option value="{{ y }}" {% if student.year == y %}selected{% endif %}>{{ y }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="form-group">
+              <label class="form-label">SECTION</label>
+              <select name="section" class="form-select">
+                {% for s in ['A','B','C','D','E'] %}
+                <option value="{{ s }}" {% if student.section == s %}selected{% endif %}>{{ s }}</option>
+                {% endfor %}
+              </select>
+            </div>
+          </div>
+          <input type="hidden" name="department" value="{{ student.department }}" />
+          <div style="display:flex;gap:8px;">
+            <button type="submit" class="btn-primary" style="flex:1;justify-content:center;">
+              <i class="fa-solid fa-save"></i> Save
+            </button>
+            <button type="button" class="btn-ghost" onclick="toggleEdit()">Cancel</button>
+          </div>
+        </form>
+      </div>
+
+    </div><!-- /.profile-hero -->
+
+    <!-- Monthly chart -->
+    {% if monthly %}
+    <div class="glass-card">
+      <div class="card-header">
+        <div class="card-title">Monthly Attendance</div>
+      </div>
+      <div style="height:160px;position:relative;">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+    {% endif %}
+
+  </div><!-- /left col -->
+
+  <!-- Right: Attendance Records -->
+  <div class="glass-card">
+    <div class="card-header">
+      <div>
+        <div class="card-title">Attendance History</div>
+        <div class="card-sub">Last 60 records</div>
+      </div>
+      <a href="{{ url_for('records', student_id=student.student_id) }}" class="btn-sm-primary">
+        <i class="fa-solid fa-filter"></i> Filter
+      </a>
+    </div>
+
+    {% if records %}
+    <div class="table-wrap">
+      <table class="data-table">
+        <thead>
+          <tr>
+            <th>Date</th>
+            <th>Time</th>
+            <th>Subject</th>
+            <th>Status</th>
+            <th>By</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in records %}
+          <tr>
+            <td class="text-muted">{{ r.date }}</td>
+            <td class="text-muted">{{ r.time }}</td>
+            <td><span class="subject-pill">{{ r.subject }}</span></td>
+            <td>
+              <span class="status-badge {% if r.status == 'Present' %}status-present{% elif r.status == 'Late' %}status-late{% else %}status-absent{% endif %}">
+                {{ r.status }}
+              </span>
+            </td>
+            <td class="text-muted" style="font-size:.72rem;">{{ r.marked_by }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+    <div class="empty-state">
+      <i class="fa-solid fa-calendar-xmark"></i>
+      <span>No attendance records found</span>
+    </div>
+    {% endif %}
+  </div>
+
+</div><!-- /.profile-layout -->
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleEdit() {
+  const form = document.getElementById('editForm');
+  form.classList.toggle('show');
+}
+
+{% if monthly %}
+Chart.defaults.color = 'rgba(255,255,255,0.45)';
+Chart.defaults.font.family = 'Inter, sans-serif';
+const mCtx = document.getElementById('monthlyChart');
+if (mCtx) {
+  new Chart(mCtx, {
+    type: 'bar',
+    data: {
+      labels: {{ monthly | map(attribute='month') | list | tojson }},
+      datasets: [{
+        label: 'Classes Attended',
+        data: {{ monthly | map(attribute='count') | list | tojson }},
+        backgroundColor: 'rgba(108,99,255,0.6)',
+        borderColor: '#6c63ff',
+        borderWidth: 2,
+        borderRadius: 6,
+      }]
+    },
+    options: {
+      responsive: true, maintainAspectRatio: false,
+      plugins: { legend: { display: false } },
+      scales: {
+        x: { grid: { color: 'rgba(255,255,255,.05)' } },
+        y: { grid: { color: 'rgba(255,255,255,.05)' }, beginAtZero: true, ticks: { stepSize: 1 } }
+      }
+    }
+  });
+}
+{% endif %}
+</script>
+{% endblock %}

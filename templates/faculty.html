@@ -1,0 +1,122 @@
+{% extends "base.html" %}
+{% block title %}Faculty Management{% endblock %}
+{% block page_title %}<h1>Faculty</h1>{% endblock %}
+
+{% block content %}
+
+<div class="page-actions">
+  <div class="count-pills">
+    <span class="count-pill">{{ faculty|length }} Active Faculty</span>
+  </div>
+  <button class="btn-primary" onclick="toggleAddForm()">
+    <i class="fa-solid fa-user-tie"></i> Add Faculty
+  </button>
+</div>
+
+<!-- Add Faculty Form (collapsible) -->
+<div id="addFacultyWrap" style="display:none;margin-bottom:20px;">
+  <div class="glass-card add-faculty-form">
+    <div class="card-title" style="margin-bottom:18px;">
+      <i class="fa-solid fa-user-plus" style="color:#6c63ff;"></i> New Faculty Member
+    </div>
+    <form method="POST" action="{{ url_for('add_faculty') }}">
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">FACULTY ID <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-id-badge"></i>
+            <input type="text" name="faculty_id" class="form-input" placeholder="e.g. FAC001" required style="text-transform:uppercase;" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">FULL NAME <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-user"></i>
+            <input type="text" name="full_name" class="form-input" placeholder="Dr. John Smith" required />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">USERNAME <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-at"></i>
+            <input type="text" name="username" class="form-input" placeholder="john.smith" required />
+          </div>
+        </div>
+      </div>
+      <div class="form-grid-3">
+        <div class="form-group">
+          <label class="form-label">DEPARTMENT <span class="required">*</span></label>
+          <select name="department" class="form-select" required>
+            <option value="">Select</option>
+            {% for d in departments %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
+          </select>
+        </div>
+        <div class="form-group">
+          <label class="form-label">EMAIL</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-envelope"></i>
+            <input type="email" name="email" class="form-input" placeholder="faculty@college.edu" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">PASSWORD <span class="required">*</span></label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-lock"></i>
+            <input type="password" name="password" class="form-input" placeholder="Set password" required minlength="6" />
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:10px;justify-content:flex-end;">
+        <button type="button" class="btn-ghost" onclick="toggleAddForm()">Cancel</button>
+        <button type="submit" class="btn-primary"><i class="fa-solid fa-save"></i> Add Faculty</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Faculty Grid -->
+{% if faculty %}
+<div class="faculty-grid">
+  {% for f in faculty %}
+  <div class="faculty-card">
+    <div class="faculty-avatar">{{ f.full_name[0]|upper }}</div>
+    <div class="faculty-name">{{ f.full_name }}</div>
+    <div class="faculty-id">{{ f.faculty_id }} · @{{ f.username }}</div>
+    <span class="faculty-dept">{{ f.department }}</span>
+    {% if f.email %}
+    <div class="faculty-email"><i class="fa-solid fa-envelope fa-xs"></i> {{ f.email }}</div>
+    {% endif %}
+    <div style="font-size:.7rem;color:rgba(255,255,255,.25);margin-top:8px;">
+      Joined {{ f.created_at[:10] }}
+    </div>
+    <form method="POST" action="{{ url_for('delete_faculty', fid=f.id) }}"
+          onsubmit="return confirm('Remove {{ f.full_name }}?')">
+      <button type="submit" class="faculty-del">
+        <i class="fa-solid fa-trash fa-xs"></i> Remove
+      </button>
+    </form>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="empty-page">
+  <i class="fa-solid fa-user-tie"></i>
+  <h3>No faculty added yet</h3>
+  <p>Add faculty members so they can log in and take attendance.</p>
+  <button class="btn-primary" onclick="toggleAddForm()">
+    <i class="fa-solid fa-user-plus"></i> Add First Faculty
+  </button>
+</div>
+{% endif %}
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function toggleAddForm() {
+  const w = document.getElementById('addFacultyWrap');
+  w.style.display = w.style.display === 'none' ? 'block' : 'none';
+  if (w.style.display === 'block') w.scrollIntoView({ behavior: 'smooth', block: 'start' });
+}
+</script>
+{% endblock %}

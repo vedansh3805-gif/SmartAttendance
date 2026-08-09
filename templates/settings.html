@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% block title %}Settings{% endblock %}
+{% block page_title %}<h1>Settings</h1>{% endblock %}
+
+{% block content %}
+<form method="POST" action="{{ url_for('settings') }}">
+
+  <div class="settings-layout">
+
+    <!-- SMTP Settings -->
+    <div class="glass-card">
+      <div class="settings-section-title">EMAIL / SMTP CONFIGURATION</div>
+
+      {% if smtp_ok %}
+      <div class="smtp-status smtp-ok"><i class="fa-solid fa-circle-check"></i> SMTP Configured</div>
+      {% else %}
+      <div class="smtp-status smtp-bad"><i class="fa-solid fa-circle-xmark"></i> SMTP Not Configured</div>
+      {% endif %}
+
+      <div class="form-group">
+        <label class="form-label">SMTP HOST</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-server"></i>
+          <input type="text" name="smtp_host" class="form-input"
+                 value="{{ cfg.get('smtp_host','smtp.gmail.com') }}"
+                 placeholder="smtp.gmail.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP PORT</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-plug"></i>
+          <input type="number" name="smtp_port" class="form-input"
+                 value="{{ cfg.get('smtp_port','587') }}" placeholder="587" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP USERNAME</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-at"></i>
+          <input type="email" name="smtp_user" class="form-input"
+                 value="{{ cfg.get('smtp_user','') }}" placeholder="your@gmail.com" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">SMTP PASSWORD / APP PASSWORD</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-key"></i>
+          <input type="password" name="smtp_pass" class="form-input"
+                 value="{{ cfg.get('smtp_pass','') }}" placeholder="Gmail App Password" />
+        </div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:6px;">
+          For Gmail: use an App Password (not your regular password). Enable 2FA first.
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">FROM EMAIL</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-envelope"></i>
+          <input type="email" name="from_email" class="form-input"
+                 value="{{ cfg.get('from_email','') }}" placeholder="noreply@college.edu" />
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label">ADMIN EMAIL (receives summaries)</label>
+        <div class="input-wrap">
+          <i class="input-icon fa-solid fa-inbox"></i>
+          <input type="email" name="admin_email" class="form-input"
+                 value="{{ cfg.get('admin_email','') }}" placeholder="admin@college.edu" />
+        </div>
+      </div>
+
+      <!-- Test SMTP -->
+      {% if smtp_ok %}
+      <button type="button" class="btn-ghost" style="margin-top:8px;" onclick="testSmtp()">
+        <i class="fa-solid fa-paper-plane"></i> Send Test Email
+      </button>
+      {% endif %}
+    </div>
+
+    <!-- General Settings -->
+    <div style="display:flex;flex-direction:column;gap:16px;">
+
+      <div class="glass-card">
+        <div class="settings-section-title">GENERAL</div>
+        <div class="form-group">
+          <label class="form-label">COLLEGE / INSTITUTION NAME</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-school"></i>
+            <input type="text" name="college_name" class="form-input"
+                   value="{{ cfg.get('college_name','Smart College of Engineering') }}" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">MIN ATTENDANCE THRESHOLD (%)</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-percent"></i>
+            <input type="number" name="low_attendance_threshold" class="form-input"
+                   value="{{ cfg.get('low_attendance_threshold','75') }}"
+                   min="0" max="100" />
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="settings-section-title">NOTIFICATION PREFERENCES</div>
+        <div class="form-group">
+          <label class="toggle-label" style="gap:14px;">
+            <input type="checkbox" name="notifications_enabled" value="1"
+                   {% if cfg.get('notifications_enabled') == '1' %}checked{% endif %} />
+            <span class="toggle-track"><span class="toggle-thumb"></span></span>
+            <div>
+              <div style="font-size:.875rem;font-weight:600;color:#e8e8f0;">Enable Email Notifications</div>
+              <div style="font-size:.75rem;color:#9999b3;">Low attendance alerts · Daily summaries · Unknown face alerts</div>
+            </div>
+          </label>
+        </div>
+      </div>
+
+      <div class="glass-card">
+        <div class="settings-section-title">CHANGE ADMIN PASSWORD</div>
+        <div class="form-group">
+          <label class="form-label">CURRENT PASSWORD</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-lock"></i>
+            <input type="password" id="curPwd" class="form-input" placeholder="Current password" />
+          </div>
+        </div>
+        <div class="form-group">
+          <label class="form-label">NEW PASSWORD</label>
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-lock-open"></i>
+            <input type="password" id="newPwd" class="form-input" placeholder="New password (min 6 chars)" />
+          </div>
+        </div>
+        <button type="button" class="btn-primary" onclick="changePassword()">
+          <i class="fa-solid fa-shield-halved"></i> Update Password
+        </button>
+      </div>
+
+      <div class="glass-card">
+        <div class="settings-section-title">SYSTEM INFO</div>
+        <div class="profile-info-grid">
+          <div class="info-row"><span class="info-row-label">Version</span><span class="info-row-val">SmartAttend v1.0</span></div>
+          <div class="info-row"><span class="info-row-label">Database</span><span class="info-row-val">SQLite (WAL mode)</span></div>
+          <div class="info-row"><span class="info-row-label">Face Engine</span><span class="info-row-val">face_recognition (dlib)</span></div>
+          <div class="info-row"><span class="info-row-label">Detection Model</span><span class="info-row-val">HOG (CPU)</span></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+
+  <!-- Save Button -->
+  <div style="display:flex;justify-content:flex-end;margin-top:20px;">
+    <button type="submit" class="btn-primary" style="padding:14px 32px;font-size:1rem;">
+      <i class="fa-solid fa-save"></i> Save All Settings
+    </button>
+  </div>
+
+</form>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function testSmtp() {
+  const res = await postJSON('/api/send-daily-summary', {});
+  showToast(res.message || (res.success ? 'Test email sent!' : 'Failed'), res.success ? 'success' : 'error');
+}
+
+async function changePassword() {
+  const cur = document.getElementById('curPwd').value;
+  const nw  = document.getElementById('newPwd').value;
+  if (!cur || !nw) { showToast('Both fields required', 'warning'); return; }
+  if (nw.length < 6) { showToast('Password must be 6+ characters', 'warning'); return; }
+  showToast('Password change via DB — restart server after manual update', 'info');
+}
+</script>
+{% endblock %}

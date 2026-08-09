@@ -1,0 +1,154 @@
+{% extends "base.html" %}
+{% block title %}Take Attendance{% endblock %}
+{% block page_title %}<h1>Take Attendance</h1>{% endblock %}
+
+{% block content %}
+<div class="att-layout">
+
+  <!-- Left: Camera Panel -->
+  <div class="glass-card" style="display:flex;flex-direction:column;gap:16px;">
+
+    <!-- Controls Row -->
+    <div class="att-controls">
+      <div style="flex:1;min-width:200px;">
+        <select id="subjectSelect" class="form-select">
+          <option value="">— Select Subject —</option>
+          {% for s in subjects %}
+          <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+      <button id="btnStartAtt" class="btn-primary" onclick="startAttCamera()">
+        <i class="fa-solid fa-video"></i> Start Camera
+      </button>
+      <button id="btnStopAtt" class="btn-ghost" onclick="stopAttCamera()" style="display:none;">
+        <i class="fa-solid fa-stop"></i> Stop
+      </button>
+      <button id="btnStartRec" class="btn-primary" onclick="startRecognition()" style="background:linear-gradient(135deg,#10d4a3,#059669);" disabled>
+        <i class="fa-solid fa-play"></i> Start Recognition
+      </button>
+      <button id="btnStopRec" class="btn-danger" onclick="stopRecognition()" style="display:none;">
+        <i class="fa-solid fa-stop"></i> Stop
+      </button>
+    </div>
+
+    <!-- Camera View -->
+    <div class="cam-container" style="aspect-ratio:16/9;">
+      <div class="cam-idle" id="attIdle">
+        <div class="cam-idle-icon"><i class="fa-solid fa-camera"></i></div>
+        <div class="cam-idle-text">Camera is off</div>
+        <div class="cam-idle-sub">Select a subject, then start camera</div>
+      </div>
+      <video id="attVideo" autoplay muted playsinline
+             style="display:none;width:100%;height:100%;object-fit:cover;"
+             onplay="document.getElementById('btnStartRec').disabled=false"></video>
+      <canvas id="attCanvas" style="display:none;position:absolute;top:0;left:0;width:100%;height:100%;"></canvas>
+    </div>
+
+    <!-- Status Bar -->
+    <div class="cam-status-bar">
+      <div style="display:flex;align-items:center;gap:8px;">
+        <div class="status-dot idle" id="statusDot"></div>
+        <span id="statusMsg" style="font-size:.82rem;color:rgba(255,255,255,.6);">Camera idle</span>
+      </div>
+      <span style="font-size:.75rem;color:rgba(255,255,255,.3);">{{ today }}</span>
+    </div>
+
+    <!-- Manual Mark Section -->
+    <div style="padding-top:14px;border-top:1px solid rgba(255,255,255,.08);">
+      <div class="card-title" style="margin-bottom:12px;font-size:.85rem;">Manual Mark Attendance</div>
+      <div class="manual-mark-form">
+        <div style="position:relative;margin-bottom:12px;">
+          <div class="input-wrap">
+            <i class="input-icon fa-solid fa-id-badge"></i>
+            <input type="text" id="manualSid" class="form-input" placeholder="Student ID or search name…" />
+          </div>
+          <div id="manualSidResults" style="display:none;"></div>
+        </div>
+        <div style="display:flex;gap:10px;">
+          <select id="manualStatus" class="form-select" style="flex:1;">
+            <option value="Present">Present</option>
+            <option value="Late">Late</option>
+          </select>
+          <button class="btn-primary" onclick="manualMark()">
+            <i class="fa-solid fa-check"></i> Mark
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Right: Live List -->
+  <div class="att-list-panel">
+
+    <!-- Today's count -->
+    <div class="glass-card" style="padding:18px 20px;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px;">
+        <div class="card-title">Marked Today</div>
+        <div class="att-count-badge">
+          <i class="fa-solid fa-circle-check"></i>
+          <span id="markedCount">{{ today_records|length }}</span>
+        </div>
+      </div>
+      <div id="liveEntryList">
+        {% if not today_records %}
+        <div class="empty-state-sm" id="liveEmpty">No attendance recorded yet</div>
+        {% endif %}
+        {% for r in today_records %}
+        <div class="live-entry" data-marked-id="{{ r.student_id }}">
+          <div class="entry-avatar">{{ r.student_name[0]|upper }}</div>
+          <div>
+            <div class="entry-name">{{ r.student_name }}</div>
+            <div class="entry-meta">{{ r.student_id }} · {{ r.subject }}</div>
+          </div>
+          <div class="entry-time">{{ r.time }}</div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="glass-card" style="padding:18px 20px;">
+      <div class="card-title" style="margin-bottom:14px;">Today's Stats</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;" id="statsGrid">
+        <div style="text-align:center;background:rgba(255,255,255,.04);border-radius:10px;padding:14px;">
+          <div style="font-size:1.6rem;font-weight:800;color:#10d4a3;" id="statPresent">—</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:4px;">PRESENT</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,.04);border-radius:10px;padding:14px;">
+          <div style="font-size:1.6rem;font-weight:800;color:#ef4444;" id="statAbsent">—</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:4px;">ABSENT</div>
+        </div>
+        <div style="text-align:center;background:rgba(255,255,255,.04);border-radius:10px;padding:14px;grid-column:1/-1;">
+          <div style="font-size:1.6rem;font-weight:800;color:#6c63ff;" id="statPct">—</div>
+          <div style="font-size:.72rem;color:rgba(255,255,255,.4);margin-top:4px;">ATTENDANCE RATE</div>
+        </div>
+      </div>
+    </div>
+
+    <a href="{{ url_for('records') }}" class="btn-ghost" style="justify-content:center;">
+      <i class="fa-solid fa-table-list"></i> View All Records
+    </a>
+  </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script src="{{ url_for('static', filename='js/camera.js') }}"></script>
+<script>
+  initAttendancePage();
+  setupStudentSearch('manualSid', 'manualSidResults', s => {
+    document.getElementById('manualSid').value = s.student_id;
+  });
+
+  // Load live stats
+  async function refreshStats() {
+    const d = await getJSON('/api/stats');
+    document.getElementById('statPresent').textContent = d.present;
+    document.getElementById('statAbsent').textContent  = d.absent;
+    document.getElementById('statPct').textContent     = d.percentage + '%';
+  }
+  refreshStats();
+  setInterval(refreshStats, 15000);
+</script>
+{% endblock %}
