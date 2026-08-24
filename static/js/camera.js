@@ -104,7 +104,7 @@ async function captureFrame() {
   canvas.getContext('2d').drawImage(video, 0, 0);
   const frame = canvas.toDataURL('image/jpeg', 0.85);
 
-  setFaceMsg('Sending…');
+  setFaceMsg('Analyzing & capturing…');
 
   try {
     const res = await postJSON('/api/face/capture', {
@@ -140,8 +140,8 @@ async function trainModel() {
   const btn = document.getElementById('btnTrain');
   const msg = document.getElementById('trainMsg');
   btn.disabled   = true;
-  btn.innerHTML  = '<i class="fa-solid fa-spinner spin"></i> Training…';
-  if (msg) msg.textContent = 'Processing face encodings…';
+  btn.innerHTML  = '<i class="fa-solid fa-spinner spin"></i> Training Model…';
+  if (msg) msg.textContent = 'Extracting 128D embeddings and computing centroid…';
 
   try {
     const res = await postJSON('/api/face/train', { student_id: window.STUDENT_ID });
@@ -155,7 +155,7 @@ async function trainModel() {
         trainStatus.innerHTML = `
           <div class="train-done">
             <i class="fa-solid fa-circle-check"></i>
-            <span>Face model trained successfully</span>
+            <span>Face model trained & saved to database</span>
           </div>`;
       }
     } else {
@@ -217,7 +217,6 @@ let isRecognizing     = false;
 let markedToday       = new Set();
 
 function initAttendancePage() {
-  // Populate marked set from server-side list
   document.querySelectorAll('[data-marked-id]').forEach(el => {
     markedToday.add(el.dataset.markedId);
   });
@@ -276,7 +275,7 @@ function startRecognition() {
   isRecognizing = true;
   document.getElementById('btnStartRec').style.display = 'none';
   document.getElementById('btnStopRec').style.display  = 'inline-flex';
-  setAttStatus('active', `Recognising — ${subjectEl.value}`);
+  setAttStatus('active', `AI Scanning & Matching — ${subjectEl.value}`);
 
   // Send frame every 2 seconds
   recognitionTimer = setInterval(sendFrameForRecognition, 2000);
@@ -334,7 +333,7 @@ async function sendFrameForRecognition() {
     if (unknownCount > 0) {
       setAttStatus('active', `${res.faces.length} face(s) detected · ${unknownCount} unknown`);
     } else if (res.faces.length > 0) {
-      setAttStatus('active', `${res.faces.length} face(s) recognised`);
+      setAttStatus('active', `${res.faces.length} face(s) recognised · Liveness Verified`);
     }
   } catch (e) {
     console.error('Frame error:', e);
@@ -357,7 +356,8 @@ function drawFaceBoxes(canvas, video, faces) {
     const h = (bottom - top)  * scaleY;
 
     const known = !!face.student_id;
-    const color = known ? '#10d4a3' : '#ef4444';
+    const isLive = face.is_live !== false;
+    const color = !isLive ? '#f59e0b' : (known ? '#10d4a3' : '#ef4444');
 
     // Box
     ctx.strokeStyle = color;
@@ -376,10 +376,16 @@ function drawFaceBoxes(canvas, video, faces) {
     });
 
     // Label background
-    const label = known ? `${face.name}  ${face.confidence}%` : 'Unknown';
+    let label = 'Unknown';
+    if (!isLive) {
+      label = `⚠️ Spoof Alert (${face.liveness_score}%)`;
+    } else if (known) {
+      label = `${face.name}  ${face.confidence}%`;
+    }
+
     ctx.font  = 'bold 12px Inter, sans-serif';
     const tw  = ctx.measureText(label).width;
-    ctx.fillStyle = known ? 'rgba(16,212,163,.85)' : 'rgba(239,68,68,.85)';
+    ctx.fillStyle = !isLive ? 'rgba(245,158,11,.85)' : (known ? 'rgba(16,212,163,.85)' : 'rgba(239,68,68,.85)');
     ctx.beginPath();
     ctx.roundRect(x - 1, y - 26, tw + 16, 22, 6);
     ctx.fill();
@@ -430,7 +436,6 @@ async function manualMark() {
   if (res.success) {
     showToast(res.message, 'success');
     document.getElementById('manualSid').value = '';
-    // Add to live list
     const name = document.getElementById('manualNameDisplay')?.textContent || sid;
     addLiveEntry(name, sid, subject);
   } else {

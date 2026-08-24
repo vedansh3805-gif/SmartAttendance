@@ -53,23 +53,23 @@ def _build_df(filters: dict = None) -> pd.DataFrame:
     data = get_attendance_data(filters)
     if data:
         df = pd.DataFrame(data)
-        # Keep only relevant columns that exist
         cols = [c for c in COLUMNS if c in df.columns]
         return df[cols]
     return pd.DataFrame(columns=COLUMNS)
 
 
 def export_csv(filters: dict = None) -> bytes:
+    """Generate CSV byte string for download."""
     return _build_df(filters).to_csv(index=False).encode('utf-8')
 
 
 def export_excel(filters: dict = None) -> bytes:
+    """Generate stylized Excel workbook byte string."""
     df     = _build_df(filters)
     output = BytesIO()
     with pd.ExcelWriter(output, engine='openpyxl') as writer:
         df.to_excel(writer, index=False, sheet_name='Attendance')
         ws = writer.sheets['Attendance']
-        # Auto-width columns
         for col_cells in ws.columns:
             max_len = max((len(str(c.value)) for c in col_cells if c.value), default=10)
             ws.column_dimensions[col_cells[0].column_letter].width = min(max_len + 4, 40)
