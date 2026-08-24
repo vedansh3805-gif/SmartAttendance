@@ -18,7 +18,7 @@ def login_required(f):
 
 
 def admin_required(f):
-    """Block non-admin users; faculty will see 403."""
+    """Block non-admin users; faculty will see redirect."""
     @wraps(f)
     def decorated(*args, **kwargs):
         if 'user_id' not in session:
@@ -50,7 +50,7 @@ def authenticate_user(username: str, password: str):
     """
     db = get_db()
 
-    # Admin
+    # Admin check
     row = db.execute(
         "SELECT * FROM admin WHERE username = ?", (username,)
     ).fetchone()
@@ -58,7 +58,7 @@ def authenticate_user(username: str, password: str):
         db.close()
         return {**dict(row), 'user_type': 'admin'}
 
-    # Faculty
+    # Faculty check
     row = db.execute(
         "SELECT * FROM faculty WHERE username = ? AND is_active = 1", (username,)
     ).fetchone()
