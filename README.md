@@ -10,6 +10,7 @@ AI-based Smart Attendance System using face recognition.
 - Attendance records
 - Reports
 - Automated attendance marking
+- Database management
 - Web-based interface
 
 ## Technologies
