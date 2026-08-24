@@ -13,8 +13,8 @@ class Config:
 
     # ── File Paths ─────────────────────────────────────
     UPLOAD_FOLDER  = os.path.join(BASE_DIR, 'static', 'uploads')
-    DATASET_FOLDER = os.path.join(BASE_DIR, 'dataset')
-    MODEL_FOLDER   = os.path.join(BASE_DIR, 'models')
+    DATASET_FOLDER = os.path.join(BASE_DIR, 'static', 'datasets')
+    MODEL_FOLDER   = os.path.join(BASE_DIR, 'static', 'models')
 
     # ── Session ────────────────────────────────────────
     PERMANENT_SESSION_LIFETIME = timedelta(hours=8)
@@ -30,9 +30,12 @@ class Config:
     FACE_IMAGES_REQUIRED  = 20
     FACE_DETECTION_MODEL  = 'hog'         # 'hog' (CPU) | 'cnn' (GPU)
     MIN_CONFIDENCE        = 60.0          # % to auto-mark attendance
+    LIVENESS_ENABLED      = True          # Anti-spoofing verification
+    LIVENESS_THRESHOLD    = 40.0          # Laplacian texture variance threshold
 
     # ── Attendance ─────────────────────────────────────
     MIN_ATTENDANCE_PCT    = 75
+    COOLDOWN_SECONDS      = 300           # 5 min cool-off between same-subject marks
 
     # ── App Data ───────────────────────────────────────
     DEPARTMENTS = [

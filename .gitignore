@@ -1,22 +1,9 @@
-# Virtual environment
 venv/
-.venv/
-
-# Python cache
 __pycache__/
 *.pyc
-
-# Database
-*.db
-
-# Environment / secrets
-.env
-
-# macOS
 .DS_Store
-
-# IDE
-.vscode/
-
-# Face recognition datasets / generated data
-dataset/
+*.db
+*.db-shm
+*.db-wal
+.env
+.env.*
