@@ -94,7 +94,7 @@ def init_db():
     if c.execute("SELECT COUNT(*) FROM admin").fetchone()[0] == 0:
         c.execute(
             "INSERT INTO admin (username, password_hash, full_name, email) VALUES (?, ?, ?, ?)",
-            ('admin', generate_password_hash('admin123'), 'System Administrator', '')
+            ('admin', generate_password_hash('admin123', method='pbkdf2:sha256'), 'System Administrator', '')
         )
 
     # ── Default settings ─────────────────────────────────────
@@ -115,4 +115,8 @@ def init_db():
 
     conn.commit()
     conn.close()
-    print("✅  Database ready")
+    print("Database ready with complete schema.")
+
+
+if __name__ == "__main__":
+    init_db()

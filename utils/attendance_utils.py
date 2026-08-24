@@ -1,5 +1,6 @@
 from datetime import datetime, date, timedelta
 from database import get_db
+from config import Config
 
 
 def mark_attendance(student_id: str, subject: str, status: str = 'Present', marked_by: str = 'AI'):
@@ -13,22 +14,22 @@ def mark_attendance(student_id: str, subject: str, status: str = 'Present', mark
 
     db = get_db()
 
-    # Duplicate check
+    # Duplicate check for the day and subject
     dup = db.execute(
-        "SELECT id FROM attendance WHERE student_id=? AND date=? AND subject=?",
+        "SELECT id, time FROM attendance WHERE student_id=? AND date=? AND subject=?",
         (student_id, today, subject)
     ).fetchone()
     if dup:
         db.close()
-        return False, "Already marked for this session"
+        return False, f"Already marked for {subject} today at {dup['time']}"
 
-    # Fetch student
+    # Fetch student details
     student = db.execute(
         "SELECT * FROM students WHERE student_id=? AND is_active=1", (student_id,)
     ).fetchone()
     if not student:
         db.close()
-        return False, "Student not found"
+        return False, "Student not found or inactive"
 
     db.execute(
         '''INSERT INTO attendance
@@ -39,13 +40,14 @@ def mark_attendance(student_id: str, subject: str, status: str = 'Present', mark
     )
     db.commit()
     db.close()
-    return True, f"✓ {student['name']} marked {status}"
+    return True, f"✓ {student['name']} ({student_id}) marked {status}"
 
 
 def get_today_stats():
+    """Returns today's total, present, absent count and attendance %."""
     today = date.today().isoformat()
     db    = get_db()
-    total   = db.execute("SELECT COUNT(*) FROM students WHERE is_active=1").fetchone()[0]
+    total = db.execute("SELECT COUNT(*) FROM students WHERE is_active=1").fetchone()[0]
     present = db.execute(
         "SELECT COUNT(DISTINCT student_id) FROM attendance WHERE date=?", (today,)
     ).fetchone()[0]
@@ -56,6 +58,7 @@ def get_today_stats():
 
 
 def get_student_attendance_percentage(student_id: str) -> float:
+    """Calculate overall attendance percentage for a single student."""
     db         = get_db()
     attended   = db.execute(
         "SELECT COUNT(DISTINCT date) FROM attendance WHERE student_id=?", (student_id,)
@@ -69,10 +72,14 @@ def get_student_attendance_percentage(student_id: str) -> float:
     return round(attended / total_days * 100, 1)
 
 
-def get_low_attendance_students(threshold: float = 75.0):
+def get_low_attendance_students(threshold: float = None):
+    """Retrieve students whose attendance percentage is below threshold."""
+    if threshold is None:
+        threshold = Config.MIN_ATTENDANCE_PCT
+
     db       = get_db()
     students = db.execute(
-        "SELECT student_id, name, department, year, section FROM students WHERE is_active=1"
+        "SELECT student_id, name, department, year, section, email FROM students WHERE is_active=1"
     ).fetchall()
     db.close()
 
@@ -86,13 +93,14 @@ def get_low_attendance_students(threshold: float = 75.0):
                 'department': s['department'],
                 'year':       s['year'],
                 'section':    s['section'],
+                'email':      s['email'],
                 'percentage': pct,
             })
     return sorted(result, key=lambda x: x['percentage'])
 
 
 def get_weekly_trend():
-    """Last 7 days: [{date, count}]"""
+    """Last 7 days daily distinct student counts: [{date, count}]"""
     db   = get_db()
     rows = db.execute(
         '''SELECT date, COUNT(DISTINCT student_id) AS count
@@ -105,7 +113,7 @@ def get_weekly_trend():
 
 
 def get_department_stats(for_date: str = None):
-    """Attendance count grouped by department for a given date (default today)."""
+    """Attendance count grouped by department for a given date."""
     for_date = for_date or date.today().isoformat()
     db = get_db()
     rows = db.execute(
@@ -115,7 +123,6 @@ def get_department_stats(for_date: str = None):
         (for_date,)
     ).fetchall()
 
-    # Also get total students per dept
     totals = db.execute(
         "SELECT department, COUNT(*) AS total FROM students WHERE is_active=1 GROUP BY department"
     ).fetchall()
