@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Settings{% endblock %}
-{% block page_title %}<h1>Settings</h1>{% endblock %}
+{% block title %}System Settings{% endblock %}
+{% block page_title %}<h1>System Settings</h1>{% endblock %}
 
 {% block content %}
 <form method="POST" action="{{ url_for('settings') }}">
@@ -50,7 +50,7 @@
                  value="{{ cfg.get('smtp_pass','') }}" placeholder="Gmail App Password" />
         </div>
         <div style="font-size:.72rem;color:rgba(255,255,255,.3);margin-top:6px;">
-          For Gmail: use an App Password (not your regular password). Enable 2FA first.
+          For Gmail: use an App Password (not your regular password).
         </div>
       </div>
       <div class="form-group">
@@ -62,7 +62,7 @@
         </div>
       </div>
       <div class="form-group">
-        <label class="form-label">ADMIN EMAIL (receives summaries)</label>
+        <label class="form-label">ADMIN NOTIFICATION EMAIL</label>
         <div class="input-wrap">
           <i class="input-icon fa-solid fa-inbox"></i>
           <input type="email" name="admin_email" class="form-input"
@@ -82,7 +82,7 @@
     <div style="display:flex;flex-direction:column;gap:16px;">
 
       <div class="glass-card">
-        <div class="settings-section-title">GENERAL</div>
+        <div class="settings-section-title">ACADEMIC &amp; BRANDING CONFIGURATION</div>
         <div class="form-group">
           <label class="form-label">COLLEGE / INSTITUTION NAME</label>
           <div class="input-wrap">
@@ -110,7 +110,7 @@
                    {% if cfg.get('notifications_enabled') == '1' %}checked{% endif %} />
             <span class="toggle-track"><span class="toggle-thumb"></span></span>
             <div>
-              <div style="font-size:.875rem;font-weight:600;color:#e8e8f0;">Enable Email Notifications</div>
+              <div style="font-size:.875rem;font-weight:600;color:#e8e8f0;">Enable Automated Email Alerts</div>
               <div style="font-size:.75rem;color:#9999b3;">Low attendance alerts · Daily summaries · Unknown face alerts</div>
             </div>
           </label>
@@ -118,33 +118,13 @@
       </div>
 
       <div class="glass-card">
-        <div class="settings-section-title">CHANGE ADMIN PASSWORD</div>
-        <div class="form-group">
-          <label class="form-label">CURRENT PASSWORD</label>
-          <div class="input-wrap">
-            <i class="input-icon fa-solid fa-lock"></i>
-            <input type="password" id="curPwd" class="form-input" placeholder="Current password" />
-          </div>
-        </div>
-        <div class="form-group">
-          <label class="form-label">NEW PASSWORD</label>
-          <div class="input-wrap">
-            <i class="input-icon fa-solid fa-lock-open"></i>
-            <input type="password" id="newPwd" class="form-input" placeholder="New password (min 6 chars)" />
-          </div>
-        </div>
-        <button type="button" class="btn-primary" onclick="changePassword()">
-          <i class="fa-solid fa-shield-halved"></i> Update Password
-        </button>
-      </div>
-
-      <div class="glass-card">
-        <div class="settings-section-title">SYSTEM INFO</div>
+        <div class="settings-section-title">SYSTEM ARCHITECTURE INFO</div>
         <div class="profile-info-grid">
-          <div class="info-row"><span class="info-row-label">Version</span><span class="info-row-val">SmartAttend v1.0</span></div>
-          <div class="info-row"><span class="info-row-label">Database</span><span class="info-row-val">SQLite (WAL mode)</span></div>
-          <div class="info-row"><span class="info-row-label">Face Engine</span><span class="info-row-val">face_recognition (dlib)</span></div>
-          <div class="info-row"><span class="info-row-label">Detection Model</span><span class="info-row-val">HOG (CPU)</span></div>
+          <div class="info-row"><span class="info-row-label">Platform</span><span class="info-row-val">SmartAttend Enterprise AI</span></div>
+          <div class="info-row"><span class="info-row-label">Database</span><span class="info-row-val">SQLite (WAL Mode &amp; Foreign Keys)</span></div>
+          <div class="info-row"><span class="info-row-label">Biometric Engine</span><span class="info-row-val">FaceRecognition / dlib HOG</span></div>
+          <div class="info-row"><span class="info-row-label">Anti-Spoofing</span><span class="info-row-val">Laplacian Texture &amp; Liveness Enabled</span></div>
+          <div class="info-row"><span class="info-row-label">Predictive Model</span><span class="info-row-val">Velocity &amp; Trend Risk Classifier</span></div>
         </div>
       </div>
 
@@ -165,15 +145,7 @@
 <script>
 async function testSmtp() {
   const res = await postJSON('/api/send-daily-summary', {});
-  showToast(res.message || (res.success ? 'Test email sent!' : 'Failed'), res.success ? 'success' : 'error');
-}
-
-async function changePassword() {
-  const cur = document.getElementById('curPwd').value;
-  const nw  = document.getElementById('newPwd').value;
-  if (!cur || !nw) { showToast('Both fields required', 'warning'); return; }
-  if (nw.length < 6) { showToast('Password must be 6+ characters', 'warning'); return; }
-  showToast('Password change via DB — restart server after manual update', 'info');
+  showToast(res.message || (res.success ? 'Test email dispatched!' : 'Failed to send'), res.success ? 'success' : 'error');
 }
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Attendance Records{% endblock %}
-{% block page_title %}<h1>Records</h1>{% endblock %}
+{% block page_title %}<h1>Master Attendance Records</h1>{% endblock %}
 
 {% block content %}
 
@@ -55,7 +55,7 @@
           <i class="input-icon fa-solid fa-id-badge"></i>
           <input type="text" name="student_id" class="form-input"
                  value="{{ filters.get('student_id','') }}"
-                 placeholder="Student ID or name…" id="recordSidInput" />
+                 placeholder="Student ID or search name…" id="recordSidInput" />
         </div>
         <div id="recordSidResults" style="display:none;"></div>
       </div>
@@ -75,10 +75,10 @@
   </div>
   <div class="export-btns">
     <a href="{{ url_for('export_csv_route', **filters) }}" class="btn-ghost btn-export-csv">
-      <i class="fa-solid fa-file-csv"></i> CSV
+      <i class="fa-solid fa-file-csv"></i> Export CSV
     </a>
     <a href="{{ url_for('export_excel_route', **filters) }}" class="btn-ghost btn-export-excel">
-      <i class="fa-solid fa-file-excel"></i> Excel
+      <i class="fa-solid fa-file-excel"></i> Export Excel
     </a>
   </div>
 </div>

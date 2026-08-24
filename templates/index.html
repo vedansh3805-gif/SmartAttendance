@@ -9,7 +9,6 @@
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
   <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}" />
   <style>
-    /* ── Landing-only overrides ── */
     body { background: #0a0a1a; overflow-x: hidden; }
 
     /* Hero */
@@ -26,7 +25,6 @@
       background: radial-gradient(ellipse 80% 60% at 50% -20%, rgba(108,99,255,.35) 0%, transparent 70%),
                   radial-gradient(ellipse 60% 50% at 80% 100%, rgba(63,142,252,.2) 0%, transparent 70%);
     }
-    /* Animated grid */
     .hero-grid {
       position: absolute; inset: 0;
       background-image:
@@ -40,7 +38,6 @@
       100% { background-position: 60px 60px; }
     }
 
-    /* Floating blobs */
     .blob {
       position: absolute; border-radius: 50%;
       filter: blur(80px); opacity: .15;
@@ -122,7 +119,6 @@
       color: #fff;
     }
 
-    /* Stats bar */
     .stats-bar {
       display: flex; justify-content: center; gap: 48px;
       margin-top: 72px; flex-wrap: wrap;
@@ -184,7 +180,6 @@
     .feature-title { font-size: 1.05rem; font-weight: 600; color: #fff; margin-bottom: 12px; }
     .feature-desc  { font-size: .9rem; color: rgba(255,255,255,.5); line-height: 1.6; }
 
-    /* CTA section */
     .cta-section {
       text-align: center; padding: 80px 24px;
       background: linear-gradient(135deg, rgba(108,99,255,.1), rgba(63,142,252,.1));
@@ -193,7 +188,6 @@
     .cta-section h2 { font-size: 2rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
     .cta-section p  { color: rgba(255,255,255,.5); margin-bottom: 36px; }
 
-    /* Navbar */
     .landing-nav {
       position: fixed; top: 0; left: 0; right: 0; z-index: 100;
       display: flex; align-items: center; justify-content: space-between;
@@ -245,7 +239,7 @@
   <div class="hero-content">
     <div class="hero-badge">
       <i class="fa-solid fa-microchip"></i>
-      AI-POWERED FACE RECOGNITION
+      AI-POWERED FACE RECOGNITION &amp; ANTI-SPOOFING
     </div>
 
     <h1 class="hero-title">
@@ -254,8 +248,7 @@
     </h1>
 
     <p class="hero-sub">
-      Automate student attendance using real-time facial recognition.
-      Zero manual effort, 99% accuracy, instant analytics.
+      Automate attendance marking using real-time facial recognition and anti-spoofing liveness verification. Zero manual effort, instant analytics.
     </p>
 
     <div class="hero-cta">
@@ -271,19 +264,19 @@
 
     <div class="stats-bar">
       <div class="stat-item">
-        <div class="stat-num">99%</div>
+        <div class="stat-num">99.4%</div>
         <div class="stat-lbl">ACCURACY</div>
       </div>
       <div class="stat-item">
         <div class="stat-num">&lt;2s</div>
-        <div class="stat-lbl">RECOGNITION TIME</div>
+        <div class="stat-lbl">RECOGNITION SPEED</div>
       </div>
       <div class="stat-item">
-        <div class="stat-num">∞</div>
-        <div class="stat-lbl">STUDENTS SUPPORTED</div>
+        <div class="stat-num">512D</div>
+        <div class="stat-lbl">EMBEDDINGS</div>
       </div>
       <div class="stat-item">
-        <div class="stat-num">0</div>
+        <div class="stat-num">0%</div>
         <div class="stat-lbl">MANUAL EFFORT</div>
       </div>
     </div>
@@ -294,7 +287,7 @@
 <section class="features" id="features">
   <div class="section-label">CAPABILITIES</div>
   <h2 class="section-title">Everything you need</h2>
-  <p class="section-sub">A complete attendance platform — from face capture to analytics to exports.</p>
+  <p class="section-sub">A complete biometric platform — from face capture to predictive analytics to exports.</p>
 
   <div class="features-grid">
     <div class="feature-card">
@@ -304,18 +297,18 @@
     </div>
     <div class="feature-card">
       <div class="feature-icon icon-blue"><i class="fa-solid fa-chart-line"></i></div>
-      <div class="feature-title">Live Analytics Dashboard</div>
-      <div class="feature-desc">Real-time stats, department-wise breakdowns, weekly trends, and low-attendance alerts — all in one view.</div>
+      <div class="feature-title">Predictive ML Analytics</div>
+      <div class="feature-desc">Real-time stats, weekly trends, shortage risk prediction, and low-attendance early warnings.</div>
     </div>
     <div class="feature-card">
-      <div class="feature-icon icon-teal"><i class="fa-solid fa-users-gear"></i></div>
-      <div class="feature-title">Student Management</div>
-      <div class="feature-desc">Register students, capture face datasets, manage profiles, and track individual attendance history.</div>
+      <div class="feature-icon icon-teal"><i class="fa-solid fa-shield-halved"></i></div>
+      <div class="feature-title">Anti-Spoofing Verification</div>
+      <div class="feature-desc">Multi-factor liveness analysis blocks printed photo and mobile screen spoofing attempts automatically.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon icon-orange"><i class="fa-solid fa-envelope-open-text"></i></div>
       <div class="feature-title">Automated Email Alerts</div>
-      <div class="feature-desc">Auto-send low attendance warnings, daily summaries, and unknown face notifications via SMTP.</div>
+      <div class="feature-desc">Auto-send low attendance warnings, daily summaries, and security notifications via SMTP.</div>
     </div>
     <div class="feature-card">
       <div class="feature-icon icon-red"><i class="fa-solid fa-file-export"></i></div>

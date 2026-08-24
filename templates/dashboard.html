@@ -1,6 +1,6 @@
 {% extends "base.html" %}
 {% block title %}Dashboard{% endblock %}
-{% block page_title %}<h1>Dashboard</h1>{% endblock %}
+{% block page_title %}<h1>Executive Dashboard</h1>{% endblock %}
 
 {% block content %}
 
@@ -9,9 +9,9 @@
   <div class="kpi-card kpi-purple">
     <div class="kpi-icon"><i class="fa-solid fa-users"></i></div>
     <div class="kpi-body">
-      <div class="kpi-label">Total Students</div>
+      <div class="kpi-label">Total Enrolled</div>
       <div class="kpi-value">{{ stats.total }}</div>
-      <div class="kpi-sub">{{ face_trained }} face-trained</div>
+      <div class="kpi-sub">{{ face_trained }} face-trained models</div>
     </div>
     <div class="kpi-sparkline"></div>
   </div>
@@ -30,7 +30,7 @@
     <div class="kpi-body">
       <div class="kpi-label">Absent Today</div>
       <div class="kpi-value">{{ stats.absent }}</div>
-      <div class="kpi-sub">out of {{ stats.total }}</div>
+      <div class="kpi-sub">out of {{ stats.total }} students</div>
     </div>
   </div>
 
@@ -39,7 +39,7 @@
     <div class="kpi-body">
       <div class="kpi-label">Attendance Rate</div>
       <div class="kpi-value">{{ stats.percentage }}%</div>
-      <div class="kpi-sub">today's rate</div>
+      <div class="kpi-sub">institutional rate today</div>
     </div>
     <div class="kpi-ring" style="--pct:{{ stats.percentage }}">
       <svg viewBox="0 0 36 36">
@@ -61,7 +61,7 @@
     <div class="card-header">
       <div>
         <div class="card-title">Weekly Attendance Trend</div>
-        <div class="card-sub">Last 7 days</div>
+        <div class="card-sub">Last 7 calendar days</div>
       </div>
       <div class="card-badge"><i class="fa-solid fa-arrow-trend-up"></i></div>
     </div>
@@ -74,8 +74,8 @@
   <div class="glass-card">
     <div class="card-header">
       <div>
-        <div class="card-title">Department Presence</div>
-        <div class="card-sub">Today's attendance by dept</div>
+        <div class="card-title">Department Distribution</div>
+        <div class="card-sub">Today's verified attendance</div>
       </div>
       <div class="card-badge"><i class="fa-solid fa-building"></i></div>
     </div>
@@ -99,21 +99,21 @@
 
 </div>
 
-<!-- ── Row 3: Recent Attendance + Low Attendance ─────────────────────── -->
+<!-- ── Row 3: Recent Attendance + Low Attendance / ML Risk ─────────────── -->
 <div class="row-2col">
 
-  <!-- Today's Attendance -->
+  <!-- Today's Attendance Stream -->
   <div class="glass-card">
     <div class="card-header">
       <div>
-        <div class="card-title">Recent Attendance</div>
-        <div class="card-sub">Today's entries</div>
+        <div class="card-title">Live Attendance Feed</div>
+        <div class="card-sub">Recent check-in entries</div>
       </div>
       <a href="{{ url_for('attendance') }}" class="btn-sm-primary">
-        <i class="fa-solid fa-camera"></i> Take Attendance
+        <i class="fa-solid fa-camera"></i> Live Kiosk
       </a>
     </div>
-    {% if today_attendance %}
+    {% if recent_att %}
     <div class="table-wrap">
       <table class="data-table">
         <thead>
@@ -125,11 +125,11 @@
           </tr>
         </thead>
         <tbody>
-          {% for r in today_attendance %}
+          {% for r in recent_att %}
           <tr>
             <td>
               <div class="table-name">{{ r.student_name }}</div>
-              <div class="table-sub">{{ r.student_id }}</div>
+              <div class="table-sub">{{ r.student_id }} · {{ r.department }}</div>
             </td>
             <td><span class="subject-pill">{{ r.subject }}</span></td>
             <td class="text-muted">{{ r.time }}</td>
@@ -154,15 +154,15 @@
   <!-- Right column: Low Attendance + Activity Log -->
   <div class="col-stack">
 
-    <!-- Low Attendance Alert -->
+    <!-- Predictive Shortage Risk Alert -->
     <div class="glass-card">
       <div class="card-header">
         <div>
-          <div class="card-title">⚠️ Low Attendance</div>
-          <div class="card-sub">Students below 75%</div>
+          <div class="card-title">⚠️ AI Early Warning System</div>
+          <div class="card-sub">Students flagged for shortage risk (<75%)</div>
         </div>
         {% if low_att %}
-        <span class="badge-alert">{{ low_att|length }}</span>
+        <span class="badge-alert">{{ low_att|length }} Alert(s)</span>
         {% endif %}
       </div>
       {% if low_att %}
@@ -170,18 +170,18 @@
         <div class="low-att-row">
           <div>
             <div class="low-att-name">{{ s.name }}</div>
-            <div class="low-att-dept">{{ s.department }} · {{ s.year }}</div>
+            <div class="low-att-dept">{{ s.student_id }} · {{ s.department }} {{ s.year }}</div>
           </div>
           <div class="low-att-pct" style="color: {{ '#ef4444' if s.percentage < 50 else '#f59e0b' }}">
             {{ s.percentage }}%
           </div>
         </div>
         {% endfor %}
-        <a href="{{ url_for('students') }}" class="view-all-link">View all →</a>
+        <a href="{{ url_for('reports') }}" class="view-all-link">View full predictive analysis →</a>
       {% else %}
       <div class="empty-state-sm">
         <i class="fa-solid fa-circle-check" style="color:#10d4a3"></i>
-        All students above 75%
+        All students maintain attendance ≥ 75%
       </div>
       {% endif %}
     </div>
@@ -189,7 +189,7 @@
     <!-- Activity Log -->
     <div class="glass-card">
       <div class="card-header">
-        <div class="card-title">Recent Activity</div>
+        <div class="card-title">Audit Activity Trail</div>
       </div>
       {% if recent_log %}
         {% for log in recent_log %}
@@ -198,7 +198,7 @@
           <div>
             <div class="log-action">{{ log.action.replace('_', ' ') }}</div>
             <div class="log-detail">{{ log.details or '—' }}</div>
-            <div class="log-time">{{ log.timestamp }}</div>
+            <div class="log-time">{{ log.timestamp }} · by {{ log.performed_by }}</div>
           </div>
         </div>
         {% endfor %}
@@ -288,18 +288,10 @@ if (dCtx && DEPT_LABELS.length) {
     }
   });
 
-  // Colour the legend dots
   const COLORS2 = ['#6c63ff','#3f8efc','#10d4a3','#f59e0b','#ef4444','#a855f7','#06b6d4','#ec4899'];
   document.querySelectorAll('.leg-dot').forEach(dot => {
     dot.style.background = COLORS2[parseInt(dot.dataset.idx) % COLORS2.length];
   });
 }
-
-// Auto-refresh stats every 30s
-setInterval(() => {
-  fetch('/api/stats').then(r=>r.json()).then(d=>{
-    // Could update KPI cards live; left as enhancement
-  });
-}, 30000);
 </script>
 {% endblock %}

@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}Face Capture – {{ student.name }}{% endblock %}
-{% block page_title %}<h1>Face Capture</h1>{% endblock %}
+{% block title %}Face Capture Studio – {{ student.name }}{% endblock %}
+{% block page_title %}<h1>Face Capture Studio</h1>{% endblock %}
 
 {% block content %}
 <div class="capture-layout">
@@ -18,8 +18,8 @@
     <div class="cam-container" id="camContainer">
       <div class="cam-idle" id="camIdle">
         <div class="cam-idle-icon"><i class="fa-solid fa-camera"></i></div>
-        <div class="cam-idle-text">Camera is off</div>
-        <div class="cam-idle-sub">Click "Start Camera" to begin</div>
+        <div class="cam-idle-text">Webcam is currently off</div>
+        <div class="cam-idle-sub">Click "Start Camera" to initiate live video stream</div>
       </div>
       <video id="videoEl" autoplay muted playsinline style="display:none;width:100%;height:100%;object-fit:cover;"></video>
       <div class="face-indicator" id="faceIndicator" style="display:none;">
@@ -30,7 +30,7 @@
 
     <div class="capture-progress">
       <div class="progress-header">
-        <span>Images Captured</span>
+        <span>Dataset Samples Captured</span>
         <span><span id="captureCount">{{ captured }}</span> / {{ required }}</span>
       </div>
       <div class="progress-bar-wrap">
@@ -44,10 +44,10 @@
         <i class="fa-solid fa-video"></i> Start Camera
       </button>
       <button id="btnCapture" class="btn-capture" onclick="captureFrame()" disabled>
-        <i class="fa-solid fa-camera-rotate"></i> Capture
+        <i class="fa-solid fa-camera-rotate"></i> Capture Sample
       </button>
       <button id="btnStopCam" class="btn-ghost" onclick="stopCamera()" style="display:none;">
-        <i class="fa-solid fa-stop"></i> Stop
+        <i class="fa-solid fa-stop"></i> Stop Camera
       </button>
     </div>
 
@@ -55,7 +55,7 @@
       <label class="toggle-label">
         <input type="checkbox" id="autoCapture" />
         <span class="toggle-track"><span class="toggle-thumb"></span></span>
-        <span style="color:rgba(255,255,255,.6);font-size:.875rem;">Auto-capture every 1.5s</span>
+        <span style="color:rgba(255,255,255,.6);font-size:.875rem;">Auto-capture burst (every 1.5s)</span>
       </label>
     </div>
   </div>
@@ -65,9 +65,9 @@
     <div class="glass-card train-card">
       <div class="train-status" id="trainStatus">
         {% if student.face_encoding %}
-        <div class="train-done"><i class="fa-solid fa-circle-check"></i><span>Face model is trained</span></div>
+        <div class="train-done"><i class="fa-solid fa-circle-check"></i><span>Face model trained &amp; active</span></div>
         {% else %}
-        <div class="train-pending"><i class="fa-solid fa-hourglass-half"></i><span>Capture {{ required }} images, then train</span></div>
+        <div class="train-pending"><i class="fa-solid fa-hourglass-half"></i><span>Capture {{ required }} images to train embedding</span></div>
         {% endif %}
       </div>
       <div class="train-bar">
@@ -82,16 +82,16 @@
       </div>
       <button id="btnTrain" class="btn-train" onclick="trainModel()"
               {% if captured < required %}disabled{% endif %}>
-        <i class="fa-solid fa-bolt"></i> Train AI Model
+        <i class="fa-solid fa-bolt"></i> Train 128D Face Model
       </button>
       <div id="trainMsg" class="train-msg"></div>
     </div>
 
     <div class="glass-card" style="padding:20px;">
-      <div class="card-title" style="margin-bottom:14px;">Captured Images</div>
+      <div class="card-title" style="margin-bottom:14px;">Recent Captured Frames</div>
       <div class="thumb-grid" id="thumbGrid">
         <div class="thumb-empty" id="thumbEmpty">
-          {% if captured == 0 %}No images yet — start camera and capture{% else %}{{ captured }} image(s) already saved{% endif %}
+          {% if captured == 0 %}No frames yet — start camera and capture{% else %}{{ captured }} image sample(s) saved{% endif %}
         </div>
       </div>
     </div>

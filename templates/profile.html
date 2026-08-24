@@ -1,6 +1,6 @@
 {% extends "base.html" %}
-{% block title %}{{ student.name }}{% endblock %}
-{% block page_title %}<h1>Student Profile</h1>{% endblock %}
+{% block title %}{{ student.name }} – Profile{% endblock %}
+{% block page_title %}<h1>Student Biometric Profile</h1>{% endblock %}
 
 {% block content %}
 <div class="profile-layout">
@@ -26,7 +26,7 @@
       <span class="trained-badge-lg {% if student.face_encoding %}yes{% else %}no{% endif %}"
             style="margin-top:10px;display:inline-flex;">
         <i class="fa-solid {% if student.face_encoding %}fa-circle-check{% else %}fa-circle-xmark{% endif %}"></i>
-        {% if student.face_encoding %}Face Trained{% else %}Not Trained{% endif %}
+        {% if student.face_encoding %}Face Model Trained{% else %}No Face Model{% endif %}
       </span>
 
       <!-- Attendance Circle -->
@@ -66,21 +66,21 @@
         </div>
         <div class="info-row">
           <span class="info-row-label"><i class="fa-solid fa-images fa-xs"></i> Face Images</span>
-          <span class="info-row-val">{{ dataset_images }} captured</span>
+          <span class="info-row-val">{{ dataset_images }} dataset samples</span>
         </div>
       </div>
 
       <!-- Actions -->
       <div class="profile-actions">
         <a href="{{ url_for('face_capture', student_id=student.student_id) }}" class="btn-primary">
-          <i class="fa-solid fa-camera"></i> Recapture Face
+          <i class="fa-solid fa-camera"></i> Capture / Retrain Face
         </a>
         <button class="btn-ghost" onclick="toggleEdit()">
-          <i class="fa-solid fa-pen"></i> Edit Details
+          <i class="fa-solid fa-pen"></i> Edit Information
         </button>
         {% if current_user and current_user.role == 'admin' %}
         <form method="POST" action="{{ url_for('delete_student', student_id=student.student_id) }}"
-              onsubmit="return confirm('Remove {{ student.name }} permanently?')">
+              onsubmit="return confirm('Remove {{ student.name }} from database?')">
           <button type="submit" class="btn-danger" style="width:100%;justify-content:center;">
             <i class="fa-solid fa-trash"></i> Remove Student
           </button>
@@ -88,7 +88,7 @@
         {% endif %}
       </div>
 
-      <!-- Edit Form (hidden by default) -->
+      <!-- Edit Form -->
       <div class="edit-form-inline" id="editForm">
         <form method="POST" action="{{ url_for('edit_student', student_id=student.student_id) }}">
           <div class="form-group">
@@ -140,13 +140,13 @@
         </form>
       </div>
 
-    </div><!-- /.profile-hero -->
+    </div>
 
     <!-- Monthly chart -->
     {% if monthly %}
     <div class="glass-card">
       <div class="card-header">
-        <div class="card-title">Monthly Attendance</div>
+        <div class="card-title">Monthly Breakdown</div>
       </div>
       <div style="height:160px;position:relative;">
         <canvas id="monthlyChart"></canvas>
@@ -154,17 +154,17 @@
     </div>
     {% endif %}
 
-  </div><!-- /left col -->
+  </div>
 
   <!-- Right: Attendance Records -->
   <div class="glass-card">
     <div class="card-header">
       <div>
         <div class="card-title">Attendance History</div>
-        <div class="card-sub">Last 60 records</div>
+        <div class="card-sub">Recent session logs</div>
       </div>
       <a href="{{ url_for('records', student_id=student.student_id) }}" class="btn-sm-primary">
-        <i class="fa-solid fa-filter"></i> Filter
+        <i class="fa-solid fa-filter"></i> Master Filter
       </a>
     </div>
 
@@ -177,7 +177,7 @@
             <th>Time</th>
             <th>Subject</th>
             <th>Status</th>
-            <th>By</th>
+            <th>Marked By</th>
           </tr>
         </thead>
         <tbody>
@@ -200,12 +200,12 @@
     {% else %}
     <div class="empty-state">
       <i class="fa-solid fa-calendar-xmark"></i>
-      <span>No attendance records found</span>
+      <span>No attendance records found for this student</span>
     </div>
     {% endif %}
   </div>
 
-</div><!-- /.profile-layout -->
+</div>
 {% endblock %}
 
 {% block scripts %}
@@ -225,7 +225,7 @@ if (mCtx) {
     data: {
       labels: {{ monthly | map(attribute='month') | list | tojson }},
       datasets: [{
-        label: 'Classes Attended',
+        label: 'Sessions Attended',
         data: {{ monthly | map(attribute='count') | list | tojson }},
         backgroundColor: 'rgba(108,99,255,0.6)',
         borderColor: '#6c63ff',

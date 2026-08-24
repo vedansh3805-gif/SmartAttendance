@@ -31,6 +31,7 @@ from utils.email_utils import (
     send_low_attendance_alert, send_daily_summary,
     send_unknown_face_alert, smtp_configured
 )
+from utils.analytics_ml import compute_student_risk_analytics, get_ai_attendance_summary
 from werkzeug.security import generate_password_hash
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -49,7 +50,7 @@ def inject_globals():
     return dict(
         current_user=get_current_user(),
         now=datetime.now(),
-        college_name=cfg.get('college_name', 'SmartAttend'),
+        college_name=cfg.get('college_name', 'SmartAttend College'),
     )
 
 
@@ -111,6 +112,7 @@ def dashboard():
     low_att = get_low_attendance_students()[:5]
     weekly  = get_weekly_trend()
     dept    = get_department_stats(today)
+    ai_sum  = get_ai_attendance_summary()
 
     db = get_db()
     recent_att = db.execute(
@@ -137,6 +139,7 @@ def dashboard():
         recent_log=recent_log,
         face_trained=face_trained,
         today=today,
+        ai_summary=ai_sum,
     )
 
 
@@ -244,7 +247,6 @@ def student_profile(student_id):
         "SELECT * FROM attendance WHERE student_id=? ORDER BY date DESC, time DESC LIMIT 60",
         (student_id,)
     ).fetchall()
-    # Monthly breakdown
     monthly = db.execute(
         '''SELECT substr(date,1,7) as month, COUNT(*) as count
            FROM attendance WHERE student_id=?
@@ -328,11 +330,14 @@ def api_capture_face():
     idx        = data.get('index', 0)
 
     if not (student_id and frame):
-        return jsonify({'success': False, 'error': 'Missing data'})
+        return jsonify({'success': False, 'error': 'Missing student_id or frame data'})
 
     ok, msg = capture_and_save_face(student_id, frame, idx)
-    return jsonify({'success': ok, 'message': msg,
-                    'total': count_dataset_images(student_id)})
+    return jsonify({
+        'success': ok,
+        'message': msg,
+        'total': count_dataset_images(student_id)
+    })
 
 
 @app.route('/api/face/train', methods=['POST'])
@@ -376,7 +381,7 @@ def api_recognize():
     subject = data.get('subject', '')
 
     if not frame:
-        return jsonify({'success': False, 'error': 'No frame'})
+        return jsonify({'success': False, 'error': 'No frame provided'})
 
     faces, err = recognize_faces_in_frame(frame)
     if err:
@@ -388,14 +393,14 @@ def api_recognize():
 
     for f in faces:
         if f['student_id'] and f['confidence'] >= Config.MIN_CONFIDENCE and subject:
-            ok, _ = mark_attendance(f['student_id'], subject, 'Present', f'AI ({uname})')
+            ok, msg = mark_attendance(f['student_id'], subject, 'Present', f'AI ({uname})')
             if ok:
                 marked.append(f['student_id'])
                 log_activity('AUTO_ATTENDANCE', f'{f["name"]} – {subject}', uname)
         if not f['student_id']:
             unknown = True
 
-    # Unknown face alert
+    # Unknown face alert trigger
     if unknown:
         db  = get_db()
         cfg = {r['key']: r['value'] for r in db.execute("SELECT key,value FROM settings").fetchall()}
@@ -415,7 +420,7 @@ def api_mark_manual():
     status     = data.get('status', 'Present')
 
     if not (student_id and subject):
-        return jsonify({'success': False, 'error': 'Missing fields'})
+        return jsonify({'success': False, 'error': 'Missing student_id or subject'})
 
     ok, msg = mark_attendance(student_id, subject, status, session.get('username', 'Manual'))
     if ok:
@@ -445,16 +450,18 @@ def records():
 
 
 # ─────────────────────────────────────────────────────────────────────────────
-# REPORTS
+# REPORTS & ML ANALYTICS
 # ─────────────────────────────────────────────────────────────────────────────
 
 @app.route('/reports')
 @login_required
 def reports():
+    risk_data = compute_student_risk_analytics()
     return render_template(
         'reports.html',
         departments=Config.DEPARTMENTS, years=Config.YEARS,
         sections=Config.SECTIONS, subjects=Config.SUBJECTS,
+        risk_profiles=risk_data,
     )
 
 
@@ -484,6 +491,12 @@ def export_excel_route():
         as_attachment=True,
         download_name=f'attendance_{date.today().isoformat()}.xlsx'
     )
+
+
+@app.route('/api/analytics/risk')
+@api_login_required
+def api_analytics_risk():
+    return jsonify(compute_student_risk_analytics())
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -520,7 +533,7 @@ def add_faculty():
         db.execute(
             '''INSERT INTO faculty (faculty_id, username, password_hash, full_name, department, email)
                VALUES (?, ?, ?, ?, ?, ?)''',
-            (fid, uname, generate_password_hash(pwd), name, dept, email)
+            (fid, uname, generate_password_hash(pwd, method='pbkdf2:sha256'), name, dept, email)
         )
         db.commit()
         log_activity('FACULTY_ADDED', f'{name} ({fid})', session['username'])

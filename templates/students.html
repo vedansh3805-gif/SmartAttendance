@@ -1,15 +1,15 @@
 {% extends "base.html" %}
 {% block title %}Students{% endblock %}
-{% block page_title %}<h1>Students</h1>{% endblock %}
+{% block page_title %}<h1>Students Directory</h1>{% endblock %}
 
 {% block content %}
 
 <!-- ── Top Bar ─────────────────────────────────────────────────────────── -->
 <div class="page-actions">
   <div class="count-pills">
-    <span class="count-pill">{{ total_count }} Total</span>
+    <span class="count-pill">{{ total_count }} Total Students</span>
     <span class="count-pill count-green">{{ trained_count }} Face-Trained</span>
-    <span class="count-pill count-orange">{{ total_count - trained_count }} Pending</span>
+    <span class="count-pill count-orange">{{ total_count - trained_count }} Pending Training</span>
   </div>
   <a href="{{ url_for('add_student') }}" class="btn-primary">
     <i class="fa-solid fa-user-plus"></i> Add Student
@@ -98,7 +98,7 @@
         <i class="fa-solid fa-eye"></i>
       </a>
       <a href="{{ url_for('face_capture', student_id=s.student_id) }}"
-         class="sc-btn sc-btn-face" title="Face Capture">
+         class="sc-btn sc-btn-face" title="Face Capture Studio">
         <i class="fa-solid fa-camera"></i>
       </a>
       {% if current_user and current_user.role == 'admin' %}
@@ -115,13 +115,13 @@
   {% endfor %}
 </div>
 
-<div class="result-count">Showing {{ students|length }} student(s)</div>
+<div class="result-count">Showing {{ students|length }} enrolled student(s)</div>
 
 {% else %}
 <div class="empty-page">
   <i class="fa-solid fa-users-slash"></i>
   <h3>No students found</h3>
-  <p>{% if search or dept or year %}Try adjusting the filters.{% else %}Add your first student to get started.{% endif %}</p>
+  <p>{% if search or dept or year %}Try adjusting your filters.{% else %}Add your first student to begin biometric registration.{% endif %}</p>
   <a href="{{ url_for('add_student') }}" class="btn-primary">
     <i class="fa-solid fa-user-plus"></i> Add Student
   </a>

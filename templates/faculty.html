@@ -1,12 +1,12 @@
 {% extends "base.html" %}
 {% block title %}Faculty Management{% endblock %}
-{% block page_title %}<h1>Faculty</h1>{% endblock %}
+{% block page_title %}<h1>Faculty Management</h1>{% endblock %}
 
 {% block content %}
 
 <div class="page-actions">
   <div class="count-pills">
-    <span class="count-pill">{{ faculty|length }} Active Faculty</span>
+    <span class="count-pill">{{ faculty|length }} Active Faculty Member(s)</span>
   </div>
   <button class="btn-primary" onclick="toggleAddForm()">
     <i class="fa-solid fa-user-tie"></i> Add Faculty
@@ -47,7 +47,7 @@
         <div class="form-group">
           <label class="form-label">DEPARTMENT <span class="required">*</span></label>
           <select name="department" class="form-select" required>
-            <option value="">Select</option>
+            <option value="">Select Department</option>
             {% for d in departments %}<option value="{{ d }}">{{ d }}</option>{% endfor %}
           </select>
         </div>
@@ -92,7 +92,7 @@
     <form method="POST" action="{{ url_for('delete_faculty', fid=f.id) }}"
           onsubmit="return confirm('Remove {{ f.full_name }}?')">
       <button type="submit" class="faculty-del">
-        <i class="fa-solid fa-trash fa-xs"></i> Remove
+        <i class="fa-solid fa-trash fa-xs"></i> Remove Faculty
       </button>
     </form>
   </div>
@@ -101,8 +101,8 @@
 {% else %}
 <div class="empty-page">
   <i class="fa-solid fa-user-tie"></i>
-  <h3>No faculty added yet</h3>
-  <p>Add faculty members so they can log in and take attendance.</p>
+  <h3>No faculty members enrolled yet</h3>
+  <p>Add faculty members so they can authenticate and manage student attendance.</p>
   <button class="btn-primary" onclick="toggleAddForm()">
     <i class="fa-solid fa-user-plus"></i> Add First Faculty
   </button>
